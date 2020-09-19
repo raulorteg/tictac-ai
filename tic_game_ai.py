@@ -11,11 +11,11 @@ from tic_helper import compute_cost, available_movements, is_final_state
 
 
 
-class Node:
-    def __init__(self, state, parent, cost):
-        self.state = state # the filled in grid
-        self.parent = parent # previous grid state
-        self.cost = cost
+# class Node:
+#     def __init__(self, state, parent, cost):
+#         self.state = state # the filled in grid
+#         self.parent = parent # previous grid state
+#         self.cost = cost
 
 # define grid dimensions
 num_rows = 3
@@ -53,20 +53,21 @@ for i in range(num_rows):
     grid.append([])
     for j in range(num_columns):
         grid[i].append(0) # corresponds to white color
-        
+
+grid = np.array(grid) # make it a numpy array
+
 interrupt = False
 valid_input = False
 user_turn = True # user starts the game
 
 # main painting loop
 while not interrupt:
-    user_turn = True
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             interrupt = True
             
         ###### USERS TURN  
-        elif (event.type == pygame.MOUSEBUTTONDOWN) and (user_turn):
+        elif (event.type == pygame.MOUSEBUTTONDOWN):
             # User clicks the mouse. Get the position
             pos = pygame.mouse.get_pos()
             # Change to grid coordinates
@@ -76,11 +77,8 @@ while not interrupt:
             if grid[row][column] != 0:
                 valid_input = False
             else:
-                user_turn = False # dont allow to click more than once
                 grid[row][column] = 1
                 
-                # create the Node
-                node = Node(grid, None, None)
                 valid_input = True
     
     screen.fill(black) # fill background in black
@@ -116,36 +114,59 @@ while not interrupt:
     # update screen
     pygame.display.flip()
     
-    if (valid_input == True):
+    for event in pygame.event.get():
         # check if final state
         is_final, winner = is_final_state(grid)
         if is_final:
             print(f"Winner is {winner}")
             interrupt = True
             break
-        print("it is not final state yet")   
-        # see what are the options
-        movements = available_movements(grid)
-        
-        # compute the cost for each option
-        cost_options = []
-        for movement in movements:
-            temp = grid
-            x, y = movement
-            temp[x][y] = 2 # AI moves (suppose)
-        
-            new_node = Node(temp, node, None)
-            cost_options.append(compute_cost(new_node))
-        print(f"Possible movements: {movements}")
-        print(f"This are my cost options: {cost_options}")
-        index = np.argmin(cost_options)
-        next_x, next_y = movements[index]
-        print(f"My next movement is {(next_x, next_y)}")
-        grid[next_x][next_y] = 2
-        print(grid)
-        print()
-        
-        sleep(1)
+            
+        elif event.type == pygame.QUIT:
+            interrupt = True
+            
+        ###### USERS TURN  
+        elif (event.type == pygame.MOUSEBUTTONDOWN):
+            # User clicks the mouse. Get the position
+            pos = pygame.mouse.get_pos()
+            # Change to grid coordinates
+            column = pos[0] // (width + margin)
+            row = pos[1] // (height + margin)
+            # check if valid, if valid then paint it green
+            if grid[row][column] != 0:
+                valid_input = False
+            else:
+                grid[row][column] = 1
+                
+                valid_input = True
+                
+        elif (valid_input == True):
+            # check if final state
+            is_final, winner = is_final_state(grid)
+            if is_final:
+                print(f"Winner is {winner}")
+                interrupt = True
+                break
+            print("it is not final state yet")   
+            # see what are the options
+            movements = available_movements(grid)
+            # compute the cost for each option
+            cost_options = []
+            
+            for movement in movements:
+                temp = grid.copy()
+                x, y = movement
+                temp[x][y] = 2 # AI moves (suppose)  
+                new_node = temp
+                cost_options.append(compute_cost(new_node, user=False))
+                print(temp, cost_options[-1])
+            
+            print(cost_options)
+            index = np.argmin(cost_options)
+            next_x, next_y = movements[index]
+            grid[next_x][next_y] = 2
+            valid_input = False
+            sleep(0.01)
         
         
         

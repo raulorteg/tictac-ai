@@ -5,11 +5,11 @@ Created on Thu Sep 17 11:41:13 2020
 @author: Raul Ortega Ochoa
 """
 
-class Node:
-    def __init__(self, state, parent, cost):
-        self.state = state # the filled in grid
-        self.parent = parent # previous grid state
-        self.cost = cost
+# class Node:
+#     def __init__(self, state, parent, cost):
+#         self.state = state # the filled in grid
+#         self.parent = parent # previous grid state
+#         self.cost = cost
 
 
 # =================================================
@@ -79,7 +79,7 @@ def is_final_state(grid):
                 red_in_row = 0
                 green_in_row = 0
         if (green_in_row == 3):
-            return True, "User"
+            return True, "Human"
         elif (red_in_row == 3):
             return True, "AI"
         else:
@@ -101,7 +101,7 @@ def is_final_state(grid):
                 green_in_row = 0
                 break
         if (green_in_row == 3):
-            return True, "User"
+            return True, "Human"
         elif (red_in_row == 3):
             return True, "AI"
         else:
@@ -122,7 +122,7 @@ def is_final_state(grid):
             green_in_row = 0
             break
     if (green_in_row == 3):
-            return True, "User"
+            return True, "Human"
     elif (red_in_row == 3):
             return True, "AI"
         
@@ -139,7 +139,7 @@ def is_final_state(grid):
             green_in_row = 0
             break
     if (green_in_row == 3):
-            return True, "User"
+            return True, "Human"
     elif (red_in_row == 3):
             return True, "AI"
     
@@ -170,7 +170,7 @@ def available_movements(grid):
     return movements
 
 # ===========================================
-def compute_cost(node):
+def compute_cost(node, user):
     """
     Description:
     ----------
@@ -178,40 +178,138 @@ def compute_cost(node):
         cost from within the costs of his children (successors)
     Parameters
     ----------
-    node : Node object
-        node.status (grid)
-        node.parent (parent)
-        node.cost
+    grid : grid
+    user : boolean
+        True if users turn
+        False if computers turn
     Returns
     -------
     cost: int
-        2 if user wins
+        2 if human wins
         1 if tie
         0 if ai wins 
     """
+    # if users turn then paint cells green 1, else red
+    if user:
+        color = 1 # green
+    else:
+        color = 2 # red
+        
+    winner_dict = {"Human": 2, "Tie": 1, "AI": 0}
+    
     # check if the node is a final one
-    grid = node.state
+    grid = node
     is_final, winner = is_final_state(grid)
     if is_final:
-        winner_dict = {"User": 2, "Tie": 1, "AI": 0}
-        node.cost = winner_dict[winner]
-        return node.cost
-    
+        cost = winner_dict[winner]
+        return cost
+    print("-"*30)
     # if node its not a final one
     cost_options = []
     movements = available_movements(grid)
     for movement in movements:
-        temp = grid
+        temp = grid.copy()
         x, y = movement
-        temp[x][y] = 2 # AI moves (suppose)
+        temp[x][y] = color
         
-        new_node = Node(temp, node, None)
-        cost_options.append(compute_cost(new_node))
+        new_node = temp
+        
+        # check if final
+        is_final, winner = is_final_state(temp)
+        if is_final:
+            cost = winner_dict[winner]
+            cost_options.append(cost)
+        
+        # if node not a final one
+        cost_options.append(compute_cost(new_node, not user))
+        print(temp, cost_options[-1])
     return max(cost_options)
-        
+
+# ============================================
+def is_in_map(pos, grid_dim):
+    """
+    Parameters
+    ----------
+    pos : tuple of 2 ints 
+        x, y coordinates in the grid system of current
+        position
+    grid_dim : tuple of ints
+        x, y dimension of the grid system
+    Returns
+        true if pos in map
+        false if not in map
+    """
+    (max_x, max_y) = grid_dim # unroll the dimensions
+    (x, y) = pos # unroll the position coordinates
     
-        
+    x_in = (x <= max_x) & (x >= 0) # logical x in map
+    y_in = (y <= max_y) & (y >= 0) # logical y in map
+    return bool(x_in*y_in) # only true if both true
+
+# =============================================
+def is_final_state_new(grid):
+    """
+    Parameters
+    ----------
+    grid : list of lists of ints
+        grid system. The state of the game 
+        when its the ai's turn
+
+    Returns
+    -------
+    is_final_state : boolean
+        True if final state
+        False if not final state
+    winner : string
+        None if game not finished
+        "Tie" if tie
+        "AI" if ai wins
+        "User" if user wins
+    """
+    winner = {"Human":1, "AI":2}
     
+    # check if everything is filled in 
+    counter = 0
+    for i in range(len(grid)):
+        for j in range(len(grid)):
+            if grid[i][j] == 0:
+                counter += 1
+    if counter == 0:
+        any_pos_left = False
+    else:
+        any_pos_left = True
     
-        
+    # scan grid for possible winner pattern
+    m, n = len(grid), len(grid[0])
+    corners = [(0,0), (0,n-1), (m-1,0), (m-1,n-1)]
     
+    for i in range(m):
+        for j in range(n):
+            is_corner = bool(len([(x,y) for x, y in corners if (x == i) and (y == j)]))
+            if (not is_corner): # if not a corner
+                vert_edge = bool( (not is_in_map((i,j+1), (m-1,n-1))) or (not is_in_map((i,j-1), (m-1,n-1))))
+                horz_edge = bool( (not is_in_map((i+1,j), (m-1,n-1))) or (not is_in_map((i-1,j), (m-1,n-1))))
+                print(not is_in_map((i,j+1), (m-1,n-1)))
+                print(not is_in_map((i,j+1), (m-1,n-1)))
+                if vert_edge:
+                    cond = (grid[i][j] == grid[i][j+1]) and (grid[i][j] == grid[i][j-1])
+                    if cond:
+                        return True, winner.keys()[winner.values().index(grid[i][j])] 
+                elif horz_edge:
+                    cond = (grid[i][j] == grid[i+1][j]) and (grid[i][j] == grid[i-1][j])
+                    if cond:
+                        return True, winner.keys()[winner.values().index(grid[i][j])] 
+                else: # middle point in the map
+                    vert_cond = (grid[i][j] == grid[i][j+1]) and (grid[i][j] == grid[i][j-1])
+                    horz_cond = (grid[i][j] == grid[i+1][j]) and (grid[i][j] == grid[i-1][j])
+                    diag_cond = (grid[i][j] == grid[i-1][j-1]) and (grid[i][j] == grid[i+1][j+1])
+                    inv_diag_cond = (grid[i][j] == grid[i-1][j+1]) and (grid[i][j] == grid[i+1][j-1])
+                    if vert_cond or horz_cond or diag_cond or inv_diag_cond:
+                        return True, winner.keys()[winner.values().index(grid[i][j])] 
+    
+    if any_pos_left:
+        return False, None
+    else:
+        return True, "Tie"
+                
+                
