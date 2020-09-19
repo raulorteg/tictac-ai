@@ -128,10 +128,10 @@ def is_final_state(grid):
         
     green_in_row, red_in_row = 0, 0
     for i in range(len(grid)): # the other diagonal
-        if grid[-i][-i] == 1:
+        if grid[-i-1][i] == 1:
             green_in_row += 1
             red_in_row = 0
-        elif grid[-i][-i] == 2:
+        elif grid[-i-1][i] == 2:
             red_in_row += 1
             green_in_row = 0
         else:
@@ -189,7 +189,6 @@ def compute_cost(node, user):
         1 if tie
         0 if ai wins 
     """
-    # if users turn then paint cells green 1, else red
     if user:
         color = 1 # green
     else:
@@ -203,7 +202,6 @@ def compute_cost(node, user):
     if is_final:
         cost = winner_dict[winner]
         return cost
-    print("-"*30)
     # if node its not a final one
     cost_options = []
     movements = available_movements(grid)
@@ -222,8 +220,13 @@ def compute_cost(node, user):
         
         # if node not a final one
         cost_options.append(compute_cost(new_node, not user))
-        print(temp, cost_options[-1])
-    return max(cost_options)
+        
+    if user:
+        color = 1 # green
+        return max(cost_options)
+    else:
+        color = 2 # red
+        return min(cost_options)
 
 # ============================================
 def is_in_map(pos, grid_dim):
@@ -247,69 +250,4 @@ def is_in_map(pos, grid_dim):
     return bool(x_in*y_in) # only true if both true
 
 # =============================================
-def is_final_state_new(grid):
-    """
-    Parameters
-    ----------
-    grid : list of lists of ints
-        grid system. The state of the game 
-        when its the ai's turn
 
-    Returns
-    -------
-    is_final_state : boolean
-        True if final state
-        False if not final state
-    winner : string
-        None if game not finished
-        "Tie" if tie
-        "AI" if ai wins
-        "User" if user wins
-    """
-    winner = {"Human":1, "AI":2}
-    
-    # check if everything is filled in 
-    counter = 0
-    for i in range(len(grid)):
-        for j in range(len(grid)):
-            if grid[i][j] == 0:
-                counter += 1
-    if counter == 0:
-        any_pos_left = False
-    else:
-        any_pos_left = True
-    
-    # scan grid for possible winner pattern
-    m, n = len(grid), len(grid[0])
-    corners = [(0,0), (0,n-1), (m-1,0), (m-1,n-1)]
-    
-    for i in range(m):
-        for j in range(n):
-            is_corner = bool(len([(x,y) for x, y in corners if (x == i) and (y == j)]))
-            if (not is_corner): # if not a corner
-                vert_edge = bool( (not is_in_map((i,j+1), (m-1,n-1))) or (not is_in_map((i,j-1), (m-1,n-1))))
-                horz_edge = bool( (not is_in_map((i+1,j), (m-1,n-1))) or (not is_in_map((i-1,j), (m-1,n-1))))
-                print(not is_in_map((i,j+1), (m-1,n-1)))
-                print(not is_in_map((i,j+1), (m-1,n-1)))
-                if vert_edge:
-                    cond = (grid[i][j] == grid[i][j+1]) and (grid[i][j] == grid[i][j-1])
-                    if cond:
-                        return True, winner.keys()[winner.values().index(grid[i][j])] 
-                elif horz_edge:
-                    cond = (grid[i][j] == grid[i+1][j]) and (grid[i][j] == grid[i-1][j])
-                    if cond:
-                        return True, winner.keys()[winner.values().index(grid[i][j])] 
-                else: # middle point in the map
-                    vert_cond = (grid[i][j] == grid[i][j+1]) and (grid[i][j] == grid[i][j-1])
-                    horz_cond = (grid[i][j] == grid[i+1][j]) and (grid[i][j] == grid[i-1][j])
-                    diag_cond = (grid[i][j] == grid[i-1][j-1]) and (grid[i][j] == grid[i+1][j+1])
-                    inv_diag_cond = (grid[i][j] == grid[i-1][j+1]) and (grid[i][j] == grid[i+1][j-1])
-                    if vert_cond or horz_cond or diag_cond or inv_diag_cond:
-                        return True, winner.keys()[winner.values().index(grid[i][j])] 
-    
-    if any_pos_left:
-        return False, None
-    else:
-        return True, "Tie"
-                
-                

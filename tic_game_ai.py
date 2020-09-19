@@ -147,7 +147,6 @@ while not interrupt:
                 print(f"Winner is {winner}")
                 interrupt = True
                 break
-            print("it is not final state yet")   
             # see what are the options
             movements = available_movements(grid)
             # compute the cost for each option
@@ -158,10 +157,8 @@ while not interrupt:
                 x, y = movement
                 temp[x][y] = 2 # AI moves (suppose)  
                 new_node = temp
-                cost_options.append(compute_cost(new_node, user=False))
-                print(temp, cost_options[-1])
+                cost_options.append(compute_cost(new_node, user=True))
             
-            print(cost_options)
             index = np.argmin(cost_options)
             next_x, next_y = movements[index]
             grid[next_x][next_y] = 2
