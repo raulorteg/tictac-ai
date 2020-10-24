@@ -1,4 +1,8 @@
 # tictac-ai
+**TIC-TAC-TOE game with an AI**
+
+Classic tic-tac-toe game implemented in Python with Pygame for visualization. The user plays green against the computer (red). First move is made by the user and starts the game. The AI uses minimax algorithm without depth limit to compute all the possible next movements of itself and the human and make the next move. 
+
 
 <img src = "tictactoe.png"/>
 
